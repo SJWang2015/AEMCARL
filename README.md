@@ -53,8 +53,11 @@ python utils/plot.py data/output/output.log
 ## Simulation Videos
 AEMCARL           
 <img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/18-circle-aemcarl.gif" width="600" />
+
 Gazebo          
 <img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/gazebo.gif" width="1000" />
+
+[Full video](https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/v2_original_compressed.mp4)
 
 
 
