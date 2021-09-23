@@ -24,63 +24,33 @@ def main():
     parser.add_argument('--test_case', type=int, default=None)
     parser.add_argument('--square', default=False, action='store_true')
     parser.add_argument('--circle', default=False, action='store_true')
-
     parser.add_argument('--video_file', type=str, default=None)
     parser.add_argument('--traj', default=False, action='store_true')
-
-    parser.add_argument("--test_policy_flag", type=str, default="1")
-    parser.add_argument("--optimizer", type=str, default="SGD")
-    parser.add_argument("--multi_process", type=str, default="average")
-    parser.add_argument("--human_num", type=int, default=5)
-
-    # 环境reward相关的参数
-    parser.add_argument("--agent_timestep", type=float, default=0.4)
-    parser.add_argument("--human_timestep", type=float, default=0.5)
-    parser.add_argument("--reward_increment", type=float, default=4.0)
-    parser.add_argument("--position_variance", type=float, default=4.0)
-    parser.add_argument("--direction_variance", type=float, default=4.0)
-
-    # visable or not
-    parser.add_argument("--visible", default=False, action="store_true")
-
-    # act step cnt
-    parser.add_argument("--act_steps", type=int, default=1)
-    parser.add_argument("--act_fixed", default=False, action="store_true")
-
     args = parser.parse_args()
-
-    human_num = args.human_num
-    agent_timestep = args.agent_timestep
-    human_timestep = args.human_timestep
-    reward_increment = args.reward_increment
-    position_variance = args.position_variance
-    direction_variance = args.direction_variance
-
-    agent_visible = args.visible
-    print(agent_timestep, " ", human_timestep, " ", reward_increment, " ", position_variance, " ", direction_variance,
-          " ", agent_visible)
+    # episode= 10
+    # rl_weight_file_name = 'rl_model_{:d}.pth'.format(episode)
+    # rl_weight_file = os.path.join(args.model_dir, rl_weight_file_name)
 
     if args.model_dir is not None:
         env_config_file = os.path.join(args.model_dir, os.path.basename(args.env_config))
         policy_config_file = os.path.join(args.model_dir, os.path.basename(args.policy_config))
         if args.il:
-            print("model: il_model.pth")
             model_weights = os.path.join(args.model_dir, 'il_model.pth')
         else:
             if os.path.exists(os.path.join(args.model_dir, 'resumed_rl_model.pth')):
-                print("model: resumed_rl_model.pth")
                 model_weights = os.path.join(args.model_dir, 'resumed_rl_model.pth')
             else:
-                model_path_ = "rl_model_5400.pth"
-                print("model: ", model_path_)
-                model_weights = os.path.join(args.model_dir, model_path_)
+                if args.policy == "actenvcarl":
+                    model_weights = os.path.join(args.model_dir, 'rl_model_10000.pth')
+                    # model_weights = os.path.join(args.model_dir, 'rl_model_6200.pth')
+                else:
+                    model_weights = os.path.join(args.model_dir, 'rl_model.pth')
     else:
         env_config_file = args.env_config
         policy_config_file = args.env_config
 
     # configure logging and device
-    logging.basicConfig(level=logging.INFO,
-                        format='%(asctime)s, %(levelname)s: %(message)s',
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s, %(levelname)s: %(message)s',
                         datefmt="%Y-%m-%d %H:%M:%S")
     device = torch.device("cuda:0" if torch.cuda.is_available() and args.gpu else "cpu")
     # device = torch.device("cpu")
@@ -90,33 +60,19 @@ def main():
     policy = policy_factory[args.policy]()
     policy_config = configparser.RawConfigParser()
     policy_config.read(policy_config_file)
-
-    policy_config.set("actenvcarl", "test_policy_flag", args.test_policy_flag)
-    policy_config.set("actenvcarl", "multi_process", args.multi_process)
-    policy_config.set("actenvcarl", "act_steps", args.act_steps)
-    policy_config.set("actenvcarl", "act_fixed", args.act_fixed)
-
-
     policy.configure(policy_config)
     if policy.trainable:
         if args.model_dir is None:
             parser.error('Trainable policy must be specified with a model weights directory')
-        # policy.get_model().load_state_dict(torch.load(model_weights, map_location={'cuda:2':'cuda:0'}))
-        policy.get_model().load_state_dict(torch.load(model_weights))
+        if args.policy == "comcarl":
+            policy.get_model().load_state_dict(torch.load(model_weights, map_location={'cuda:1':'cuda:0'}))
+        else:
+            policy.get_model().load_state_dict(torch.load(model_weights))
         # policy.get_model().load_state_dict(torch.jit.load(model_weights))
 
     # configure environment
     env_config = configparser.RawConfigParser()
     env_config.read(env_config_file)
-
-    env_config.set("sim", "human_num", human_num)
-    env_config.set("reward", "agent_timestep", agent_timestep)
-    env_config.set("reward", "human_timestep", human_timestep)
-    env_config.set("reward", "reward_increment", reward_increment)
-    env_config.set("reward", "position_variance", position_variance)
-    env_config.set("reward", "direction_variance", direction_variance)
-    # env_config.set("robot", "visible", agent_visible)
-
     env = gym.make('CrowdSim-v0')
     env.configure(env_config)
     if args.square:
@@ -124,10 +80,6 @@ def main():
     if args.circle:
         env.test_sim = 'circle_crossing'
     robot = Robot(env_config, 'robot')
-    robot.visible = agent_visible
-
-    print("robot visable: ", robot.visible)
-
     robot.set_policy(policy)
     env.set_robot(robot)
     explorer = Explorer(env, robot, device, gamma=0.9)
@@ -164,10 +116,7 @@ def main():
             human_times = env.get_human_times()
             logging.info('Average time for humans to reach goal: %.2f', sum(human_times) / len(human_times))
     else:
-        logging.info("run k episodes")
-
-        # explorer.run_k_episodes(env.case_size[args.phase], args.phase, print_failure=True)
-        explorer.run_k_episodes(50, args.phase, print_failure=True)
+        explorer.run_k_episodes(env.case_size[args.phase], args.phase, print_failure=True)
 
 
 if __name__ == '__main__':

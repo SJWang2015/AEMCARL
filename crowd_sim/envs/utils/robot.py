@@ -11,5 +11,4 @@ class Robot(Agent):
             raise AttributeError('Policy attribute has to be set!')
         state = JointState(self.get_full_state(), ob)
         action = self.policy.predict(state)
-        # print("self.policy.last_state: ",self.policy.last_state)
         return action

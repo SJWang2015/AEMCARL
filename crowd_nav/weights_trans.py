@@ -19,7 +19,6 @@ def main():
     parser.add_argument('--policy_config', type=str, default='configs/policy.config')
     parser.add_argument('--policy', type=str, default='orca')
     parser.add_argument('--model_dir', type=str, default=None)
-    parser.add_argument('--output_dir', type=str, default=None)
     parser.add_argument('--il', default=False, action='store_true')
     parser.add_argument('--gpu', default=True, action='store_true')
     parser.add_argument('--visualize', default=False, action='store_true')
@@ -48,11 +47,9 @@ def main():
     if args.model_dir is not None:
         for fn in model_path:
             with open(fn, 'rb') as fp:
-                base_name = os.path.basename(fn)
-                rl_weight_file_name = os.path.join(args.output_dir, base_name)
-                print(rl_weight_file_name)
-                model.load_state_dict(torch.load(fp))
-                torch.save(model.state_dict(), rl_weight_file_name, _use_new_zipfile_serialization=False)
+                print(fp)
+                rl_weight_file = model.load_state_dict(torch.load(fp))
+                torch.save(model.state_dict(), fp, _use_new_zipfile_serialization=False)
 
 
 if __name__ == '__main__':

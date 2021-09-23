@@ -19,14 +19,8 @@ class Explorer(object):
         self.target_model = copy.deepcopy(target_model)
 
     # @profile
-    def run_k_episodes(self,
-                       k,
-                       phase,
-                       update_memory=False,
-                       imitation_learning=False,
-                       episode=None,
+    def run_k_episodes(self, k, phase, update_memory=False, imitation_learning=False, episode=None,
                        print_failure=False):
-        # logging("run episodes: %d"%(k))
         self.robot.policy.set_phase(phase)
         success_times = []
         collision_times = []
@@ -40,8 +34,12 @@ class Explorer(object):
         collision_cases = []
         timeout_cases = []
         time_begin = 0
-
-        for i in range(k):
+        collision_step_cnt = 0
+        success_step_cnt = 0
+        task_dist = 0
+        avg_v = 0
+   
+        for i in range(k): 
             time_begin = t.time()
             ob = self.env.reset(phase)
             done = False
@@ -62,10 +60,15 @@ class Explorer(object):
             if isinstance(info, ReachGoal):
                 success += 1
                 success_times.append(self.env.global_time)
+                success_step_cnt += self.robot.policy.total_step
+                # task_dist += self.robot.policy.task_dist / self.robot.policy.total_step * self.env.global_time
+                task_dist += self.robot.policy.task_dist
+                self.robot.policy.task_dist = 0
             elif isinstance(info, Collision):
                 collision += 1
                 collision_cases.append(i)
                 collision_times.append(self.env.global_time)
+                collision_step_cnt += self.robot.policy.total_step
             elif isinstance(info, Timeout):
                 timeout += 1
                 timeout_cases.append(i)
@@ -73,35 +76,33 @@ class Explorer(object):
             else:
                 raise ValueError('Invalid end signal from environment')
 
-            # updatememory中传入的相当于是轨迹，在updatememory中计算state的value，然后存入 memory buffer 中
             if update_memory:
                 if isinstance(info, ReachGoal) or isinstance(info, Collision):
                     # only add positive(success) or negative(collision) experience in experience set
                     self.update_memory(states, actions, rewards, imitation_learning)
 
-            cumulative_rewards.append(
-                sum([
-                    pow(self.gamma, t * self.robot.time_step * self.robot.v_pref) * reward
-                    for t, reward in enumerate(rewards)
-                ]))
+            cumulative_rewards.append(sum([pow(self.gamma, t * self.robot.time_step * self.robot.v_pref)
+                                           * reward for t, reward in enumerate(rewards)]))
+            
+            print("i/k: %d/%d, robot pos: %s, %s, time consuming is:%s secs." % (i, k, self.robot.px, self.robot.py ,t.time() - time_begin))
 
-            print("i/k: %d/%d, robot pos: %s, %s, time consuming is:%s secs. %s " %
-                  (i, k, self.robot.px, self.robot.py, t.time() - time_begin, info.__str__()))
-
-        if hasattr(self.robot.policy, "use_rate_statistic"):
-            if self.robot.policy.use_rate_statistic:
-                statistic_info = self.robot.policy.get_act_statistic_info()
-                print("ACT Usage: ", statistic_info)
-        # print(self.robot.policy.model.actf_enncoder.act_fn.act_cnt)
+        extra_info = '' if episode is None else 'in episode {} '.format(episode)
+        logging.info('{:<5} {}has success-step-cnt rate: {:.2f}, collision-step-cnt: {:.2f}, avg_task_dist: {:.2f}'.
+                     format(phase.upper(), extra_info, success_step_cnt, collision_step_cnt, task_dist / success))
+        # step1_rate = self.robot.policy.step_cnt / self.robot.policy.total_step
+        # step2_rate = self.robot.policy.step2_cnt / self.robot.policy.total_step
+        # step3_rate = self.robot.policy.step3_cnt / self.robot.policy.total_step
+        # logging.info('{:<5} {}has 1-step rate: {:.2f}, 2-step rate: {:.2f},  3-step rate: {:.2f}, total step: {:.4f}'.
+        #              format(phase.upper(), extra_info, step1_rate, step2_rate, step3_rate,self.robot.policy.total_step ))
         success_rate = success / k
         collision_rate = collision / k
         assert success + collision + timeout == k
         avg_nav_time = sum(success_times) / len(success_times) if success_times else self.env.time_limit
 
-        extra_info = '' if episode is None else 'in episode {} '.format(episode)
-        logging.info(
-            '{:<5} {}has success rate: {:.2f}, collision rate: {:.2f}, nav time: {:.2f}, total reward: {:.4f}'.format(
-                phase.upper(), extra_info, success_rate, collision_rate, avg_nav_time, average(cumulative_rewards)))
+        
+        logging.info('{:<5} {}has success rate: {:.2f}, collision rate: {:.2f}, nav time: {:.2f}, total reward: {:.4f}'.
+                     format(phase.upper(), extra_info, success_rate, collision_rate, avg_nav_time,
+                            average(cumulative_rewards)))
         if phase in ['val', 'test']:
             total_time = sum(success_times + collision_times + timeout_times) * self.robot.time_step
             logging.info('Frequency of being in danger: %.2f and average min separate distance in danger: %.2f',
@@ -121,13 +122,10 @@ class Explorer(object):
             # VALUE UPDATE
             if imitation_learning:
                 # define the value of states in IL as cumulative discounted rewards, which is the same in RL
-                state = self.target_policy.transform(state)  #CADRL.transform(state)
+                state = self.target_policy.transform(state) #CADRL.transform(state)
                 # value = pow(self.gamma, (len(states) - 1 - i) * self.robot.time_step * self.robot.v_pref)
-                value = sum([
-                    pow(self.gamma,
-                        max(t - i, 0) * self.robot.time_step * self.robot.v_pref) * reward * (1 if t >= i else 0)
-                    for t, reward in enumerate(rewards)
-                ])
+                value = sum([pow(self.gamma, max(t - i, 0) * self.robot.time_step * self.robot.v_pref) * reward
+                             * (1 if t >= i else 0) for t, reward in enumerate(rewards)])
             else:
                 if i == len(states) - 1:
                     # terminal state
@@ -135,8 +133,7 @@ class Explorer(object):
                 else:
                     next_state = states[i + 1]
                     gamma_bar = pow(self.gamma, self.robot.time_step * self.robot.v_pref)
-                    action_value, _ = self.target_model(next_state.unsqueeze(0))
-                    value = reward + gamma_bar * action_value.data.item()
+                    value = reward + gamma_bar * self.target_model(next_state.unsqueeze(0)).data.item()
             value = torch.Tensor([value]).to(self.device)
 
             # # transform state of different human_num into fixed-size tensor
