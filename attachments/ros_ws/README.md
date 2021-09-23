@@ -13,7 +13,7 @@ The code of ros message "ObjectArray" is placed in the "helper" ditrectory.
 
 
 ## Simulation Videos
-Gazebo          
+Gazebo (4X)          
 <img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/gazebo.gif" width="1000" />
 
 
