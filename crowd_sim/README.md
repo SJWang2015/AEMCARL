@@ -27,7 +27,6 @@ Policy takes state as input and output an action. Current available policies:
 * LSTM-RL: use lstm to encode the human states into one fixed-length vector
 * SARL: use pairwise interaction module to model human-robot interaction and use self-attention to aggregate humans' information
 * OM-SARL: extend SARL by encoding intra-human interaction with a local map
-* ACTENVCARL: Adaptive environment modelling collision avoidance reinforcement learning
 
 
 ## State

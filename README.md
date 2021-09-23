@@ -1,7 +1,4 @@
 # AEMCARL
-This repository contains the codes for our paper. For more details, please refer to the paper
-[Adaptive Environment Modeling Based Reinforcement Learning(AEMCARL) for Collision Avoidance in Crowded Scenes](https://github.com/SJWang2015/AEMCARL/blob/main/attachments/IROS21_0246_MS.pdf). Our RL model, which is named AEMCARL, can be find in the "crowd_nav/policy/actenvcarl".
-
 This project is based on the [CrowdNav](https://github.com/vita-epfl/CrowdNav).
 
 
@@ -18,6 +15,10 @@ The major challenges of collision avoidance forrobot navigation in crowded scene
 ```
 pip install -e .
 ```
+3. Create environment
+```
+conda env create -f env.yaml
+```
 
 ## Getting started
 This repository is organized in two parts: gym_crowd/ folder contains the simulation environment and
@@ -28,21 +29,19 @@ inside the crowd_nav/ folder.
 
 1. Train a policy.
 ```
-python train.py --policy actenvcarl
+python train.py --policy actenvcarl --test_policy_flag 5 --multi_process self_attention --optimizer Adam  --agent_timestep 0.4 --human_timestep 0.5 --reward_increment 2.0 --position_variance 2.0  --direction_variance 2.0
 ```
 2. Test policies with 500 test cases.
 ```
-python test.py --policy orca --phase test
-python test.py --policy actenvcarl --model_dir data/output --phase test
+python test.py --policy actenvcarl --test_policy_flag 5 --multi_process self_attention --agent_timestep 0.4 --human_timestep 0.5 --reward_increment 2.0 --position_variance 2.0  --direction_variance 2.0 --model_dir data/output
 ```
 3. Run policy for one episode and visualize the result.
 ```
-python test.py --policy orca --phase test --visualize --test_case 0
-python test.py --policy actenvcarl --model_dir data/output --phase test --visualize --test_case 0
+python test.py --policy actenvcarl --test_policy_flag 5 --multi_process self_attention --agent_timestep 0.4 --human_timestep 0.5 --reward_increment 2.0 --position_variance 2.0  --direction_variance 2.0 --model_dir data/output --phase test --visualize --test_case 0
 ```
 4. Visualize a test case.
 ```
-python test.py --policy actenvcarl --model_dir data/output --phase test --visualize --test_case 0
+python test.py --policy actenvcarl --test_policy_flag 5 --multi_process self_attention --agent_timestep 0.4 --human_timestep 0.5 --reward_increment 2.0 --position_variance 2.0  --direction_variance 2.0 --model_dir data/output --phase test --visualize --test_case 0
 ```
 5. Plot training curve.
 ```
@@ -56,8 +55,6 @@ AEMCARL
 
 Gazebo          
 <img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/gazebo.gif" width="1000" />
-
-[Full video](https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/v2_original_compressed.mp4)
 
 
 

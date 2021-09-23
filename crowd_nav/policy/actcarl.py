@@ -82,7 +82,7 @@ class ValueNetwork(nn.Module):
         self.joint_state_dim = joint_state_dim
         self.in_mlp_dims = in_mlp_dims
         self.input_dim = input_dim
-        self.gru_hidden_dim = in_mlp_dims[-1]*2
+        self.gru_hidden_dim = in_mlp_dims[-1]*2 + self.joint_state_dim
         self.with_dynamic_net = with_dynamic_net
         self.with_global_state = with_global_state
 
@@ -113,7 +113,7 @@ class ValueNetwork(nn.Module):
         global_state = global_state.expand((size[0], size[1], self.global_state_dim)).contiguous().view(-1, self.global_state_dim)  ##batch_sz*num_agents*in_mlp_dims[-1]
 
         if self.with_global_state:
-            sort_mlp_input = torch.cat([in_mlp_output, global_state], dim=1) #batch_sz*num_agents*(in_mlp_dims[-1]*2 + self_state_size)
+            sort_mlp_input = torch.cat([in_mlp_output, global_state, state_att], dim=1) #batch_sz*num_agents*(in_mlp_dims[-1]*2 + self_state_size)
         else:
             sort_mlp_input = in_mlp_output #batch_sz*num_agents*(in_mlp_dims[-1]*2)
         # sort_mlp_input = torch.cat([in_mlp_output, global_state], dim=1)
@@ -159,5 +159,5 @@ class ACTCARL(MultiHumanRL):
         # logging.info('Policy: {} {} global state'.format(self.name, 'w/' if with_global_state else 'w/o'))
         # logging.info('Policy: {} {} interaction state'.format(self.name, 'w/' if with_interaction else 'w/o'))
 
-    # def get_attention_weights(self):
-    #     return self.model.attention_weights
+    def get_attention_weights(self):
+        return self.model.attention_weights
