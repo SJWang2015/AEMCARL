@@ -3,7 +3,11 @@ This project is based on the [CrowdNav](https://github.com/vita-epfl/CrowdNav).
 
 
 ## Abstract
-The major challenges of collision avoidance forrobot navigation in crowded scenes lie in accurate environmentmodeling, fast perceptions, and trustworthy motion planningpolicies. This paper presents a novel adaptive environmentmodel based collision avoidance reinforcement learning (i.e.,AEMCARL) framework for an unmanned robot to achievecollision-free motions in challenging navigation scenarios. Thenovelty of this work is threefold: (1) developing a hierarchicalnetwork of extended gated recurrent units (EGRUs) for environ-ment modeling; (2) developing an adaptive perception mecha-nism with an attention module; (3) developing a comprehensivereinforcement learning (RL) framework to jointly train theenvironment model, perception function and motion planningpolicy. The proposed method is tested with the Gym-Gazebosimulator and a group of robots (Husky and Turtlebot ) undervarious crowded scenes. Both simulation and experimentalresults have demonstrated the superior performance of theproposed method over baseline methods.
+The major challenges of collision avoidance for robot navigation in crowded scenes lie in accurate environment modeling,
+fast perceptions, and trustworthy motion planning policies. This paper presents a novel adaptive environment model based
+collision avoidance reinforcement learning (i.e., AEMCARL) framework for an unmanned robot to achieve collision-free motions
+in challenging navigation scenarios. The novelty of this work is threefold: (1) developing a hierarchical network of gated-recurrent-unit (GRU) for environment modeling; (2) developing an adaptive perception mechanism with an attention module; (3)
+developing an adaptive reward function for the reinforcement learning (RL) framework to jointly train the environment model, perception function and motion planning policy. The proposed method is tested with the Gym-Gazebo simulator and a group of robots (Husky and Turtlebot) under various crowded scenes. Both simulation and experimental results have demonstrated the superior performance of the proposed method over baseline methods.
 
 
 ## Method Overview
