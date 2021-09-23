@@ -57,7 +57,7 @@ python utils/plot.py data/output/output.log
 AEMCARL           
 <img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/18-circle-aemcarl.gif" width="600" />
 
-Gazebo          
+Gazebo(4X)         
 <img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/gazebo.gif" width="1000" />
 
 
