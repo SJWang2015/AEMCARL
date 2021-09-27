@@ -12,7 +12,7 @@ developing an adaptive reward function for the reinforcement learning (RL) frame
 
 
 ## Method Overview
-<img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/framework_with_reward.pdf" width="1000" />
+<img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/framework.png" width="1000" />
 
 ## Setup
 1. Install [Python-RVO2](https://github.com/sybrenstuvel/Python-RVO2) library
