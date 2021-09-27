@@ -3,6 +3,7 @@ This project is based on the [CrowdNav](https://github.com/vita-epfl/CrowdNav).
 
 
 ## Abstract
+<img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/overview.png" width="1000" />
 The major challenges of collision avoidance for robot navigation in crowded scenes lie in accurate environment modeling,
 fast perceptions, and trustworthy motion planning policies. This paper presents a novel adaptive environment model based
 collision avoidance reinforcement learning (i.e., AEMCARL) framework for an unmanned robot to achieve collision-free motions
@@ -11,7 +12,7 @@ developing an adaptive reward function for the reinforcement learning (RL) frame
 
 
 ## Method Overview
-<img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/overview.png" width="1000" />
+<img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/framework_with_reward.pdf" width="1000" />
 
 ## Setup
 1. Install [Python-RVO2](https://github.com/sybrenstuvel/Python-RVO2) library
