@@ -10,6 +10,18 @@ collision avoidance reinforcement learning (i.e., AEMCARL) framework for an unma
 in challenging navigation scenarios. The novelty of this work is threefold: (1) developing a hierarchical network of gated-recurrent-unit (GRU) for environment modeling; (2) developing an adaptive perception mechanism with an attention module; (3)
 developing an adaptive reward function for the reinforcement learning (RL) framework to jointly train the environment model, perception function and motion planning policy. The proposed method is tested with the Gym-Gazebo simulator and a group of robots (Husky and Turtlebot) under various crowded scenes. Both simulation and experimental results have demonstrated the superior performance of the proposed method over baseline methods.
 
+## Citation
+If you use rllab for academic research, you are highly encouraged to cite the following paper:
+
+```latex
+
+@article{wang2022adaptive,
+  title={Adaptive Environment Modeling Based Reinforcement Learning for Collision Avoidance in Complex Scenes},
+  author={Wang, Shuaijun and Gao, Rui and Han, Ruihua and Chen, Shengduo and Li, Chengyang and Hao, Qi},
+  journal={arXiv preprint arXiv:2203.07709},
+  year={2022}
+}
+```
 
 ## Method Overview
 <img src="https://github.com/SJWang2015/AEMCARL/blob/main/attachments/imgs/framework.png" width="1000" />
