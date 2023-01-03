@@ -15,12 +15,15 @@ If you use rllab for academic research, you are highly encouraged to cite the fo
 
 ```latex
 
-@article{wang2022adaptive,
-  title={Adaptive Environment Modeling Based Reinforcement Learning for Collision Avoidance in Complex Scenes},
+@INPROCEEDINGS{9982107,
   author={Wang, Shuaijun and Gao, Rui and Han, Ruihua and Chen, Shengduo and Li, Chengyang and Hao, Qi},
-  journal={arXiv preprint arXiv:2203.07709},
-  year={2022}
-}
+  booktitle={2022 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)}, 
+  title={Adaptive Environment Modeling Based Reinforcement Learning for Collision Avoidance in Complex Scenes}, 
+  year={2022},
+  volume={},
+  number={},
+  pages={9011-9018},
+  doi={10.1109/IROS47612.2022.9982107}}
 ```
 
 ## Method Overview
