@@ -73,6 +73,22 @@ class Agent(object):
             next_vy = action.v * np.sin(next_theta)
         return ObservableState(next_px, next_py, next_vx, next_vy, self.radius)
 
+    def get_scan(self, resolution, other_px, other_py):
+        # get vector between other and this
+        r = np.array([self.px - other_px, self.py - other_py])
+        # compute angle of vector
+        theta = np.arctan2(r[1], r[0])
+        # compute angles to each edge of agent from robot
+        dtheta = np.arcsin(self.radius / np.linalg.norm(r))
+        max_theta = theta + dtheta
+        min_theta = theta - dtheta
+        # compute angles in range matching resolution constraint
+        angles = np.array(range(int(np.ceil(min_theta*resolution/(2*np.pi))), int(np.ceil(max_theta*resolution/(2*np.pi))))) * 2 * np.pi / resolution
+        # compute distances at each angle
+        distances = np.linalg.norm(r) / np.cos(np.abs(theta - angles))
+        # return dictionary of {angles : distances}
+        return dict(zip(angles.tolist(), distances.tolist()))
+
     def get_full_state(self):
         return FullState(self.px, self.py, self.vx, self.vy, self.radius, self.gx, self.gy, self.v_pref, self.theta)
 
