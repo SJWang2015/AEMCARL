@@ -671,6 +671,9 @@ class CrowdSim(gym.Env):
             # compute the observation
             if self.robot.sensor == 'coordinates':
                 ob = [human.get_observable_state() for human in self.humans]
+            elif self.robot.sensor == 'lidar':
+                # todo: take human angles and put into some sort of observation - what does that mean for our case?
+                human_angles = [human.get_scan(360, self.robot.px, self.robot.py) for human in self.humans]
             elif self.robot.sensor == 'RGB':
                 raise NotImplementedError
         else:
