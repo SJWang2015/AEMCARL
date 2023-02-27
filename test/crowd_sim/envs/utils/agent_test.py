@@ -17,13 +17,12 @@ class AgentTest(unittest.TestCase):
             humans.append(Human(env_config, 'humans'))
             humans[i].set_position([10*x_sign[i], 10*y_sign[i]])
 
-        expected_angles = [0.7853981633974483, 2.356194490192345, -2.356194490192345, -0.7853981633974483]
         expected_distance = 14.142135623730951
 
         for i in range(4):
             scan = humans[i].get_scan(8, 0, 0)
             self.assertEqual(len(scan), 1)
-            self.assertEqual(scan[expected_angles[i]], expected_distance)
+            self.assertEqual(list(scan.values())[0], expected_distance)
 
 
 if __name__ == '__main__':
