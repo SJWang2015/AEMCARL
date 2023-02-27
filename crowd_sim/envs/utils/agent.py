@@ -83,11 +83,14 @@ class Agent(object):
         max_theta = theta + dtheta
         min_theta = theta - dtheta
         # compute angles in range matching resolution constraint
-        angles = np.array(range(int(np.ceil(min_theta*resolution/(2*np.pi))), int(np.ceil(max_theta*resolution/(2*np.pi))))) * 2 * np.pi / resolution
+        angle_indexes = np.array(range(int(np.ceil(min_theta*resolution/(2*np.pi))), int(np.ceil(max_theta*resolution/(2*np.pi)))))
+        angles = angle_indexes * 2 * np.pi / resolution
         # compute distances at each angle
         distances = np.linalg.norm(r) / np.cos(np.abs(theta - angles))
-        # return dictionary of {angles : distances}
-        return dict(zip(angles.tolist(), distances.tolist()))
+        # correct angle indexes to the range (0, resolution - 1)
+        angle_indexes = np.where(angle_indexes < 0, angle_indexes + resolution, angle_indexes)
+        # return dictionary of {indexes : distances}
+        return dict(zip(angle_indexes.tolist(), distances.tolist()))
 
     def get_full_state(self):
         return FullState(self.px, self.py, self.vx, self.vy, self.radius, self.gx, self.gy, self.v_pref, self.theta)
