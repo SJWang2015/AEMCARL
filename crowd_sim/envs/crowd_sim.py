@@ -252,8 +252,12 @@ class CrowdSim(gym.Env):
         self.square_width = None
         self.circle_radius = None
         self.human_num = None
+        self.lidar_fov = 360
+        self.scan_points = 360
+        self.lidar_resolution = np.deg2rad(self.lidar_fov/self.scan_points)
         # for visualization
         self.states = None
+        self.scans = None
         self.action_values = None
         self.attention_weights = None
 
@@ -483,6 +487,31 @@ class CrowdSim(gym.Env):
         del sim
         return self.human_times
 
+    def scan_lidar(self):
+        # get scan as a dictionary {angle_index : distance}
+        res = self.scan_points
+        full_scan = {}
+        for h in self.humans:
+            scan = h.get_scan(res, self.robot.px, self.robot.py)
+            for angle in scan:
+                if scan[angle] < full_scan.get(angle, np.inf):
+                    full_scan[angle] = scan[angle]
+
+        # convert to array of length res, with inf at angles with no reading
+        out_scan = np.zeros(res) + np.inf
+        for k in full_scan.keys():
+            out_scan[k] = full_scan[k]
+        return out_scan
+    
+    def scan_to_points(self, scan):
+        coords = []
+        for i in range(len(scan)):
+            if scan[i] != np.inf:
+                coords.append([self.robot.px + scan[i]*np.cos(np.deg2rad(i)), self.robot.py + scan[i]*np.sin(np.deg2rad(i))])
+
+        return coords
+
+
     def reset(self, phase='test', test_case=None):
         """
         Set px, py, gx, gy, vx, vy, theta for robot and humans
@@ -538,6 +567,7 @@ class CrowdSim(gym.Env):
             agent.policy.time_step = self.time_step
 
         self.states = list()
+        self.scans = list()
         if hasattr(self.robot.policy, 'action_values'):
             self.action_values = list()
         if hasattr(self.robot.policy, 'get_attention_weights'):
@@ -658,6 +688,8 @@ class CrowdSim(gym.Env):
             if hasattr(self.robot.policy, 'get_attention_weights'):
                 self.attention_weights.append(self.robot.policy.get_attention_weights())
 
+            self.scans.append(self.scan_to_points(self.scan_lidar()))
+
             # update all agents
             self.robot.step(action)
             for i, human_action in enumerate(human_actions):
@@ -763,6 +795,11 @@ class CrowdSim(gym.Env):
                     ax.add_artist(nav_direction)
                     for human_direction in human_directions:
                         ax.add_artist(human_direction)
+                
+                # scan_points = self.scans[k]
+                # xs = [scan_points[i][0] for i in range(len(scan_points))]
+                # ys = [scan_points[i][1] for i in range(len(scan_points))]
+                # ax.scatter(xs, ys, s=10)
             plt.legend([robot], ['Robot'], fontsize=16)
             plt.show()
         elif mode == 'video':
@@ -837,13 +874,24 @@ class CrowdSim(gym.Env):
             ]
             for arrow in arrows:
                 ax.add_artist(arrow)
-            global_step = 0
 
+            scan_points = self.scans[0]
+            xs = [scan_points[i][0] for i in range(len(scan_points))]
+            ys = [scan_points[i][1] for i in range(len(scan_points))]
+            global scatter 
+            scatter = ax.scatter(xs, ys, c='b', s=5)
+            global_step = 0
             def update(frame_num):
                 nonlocal global_step
                 nonlocal arrows
                 global_step = frame_num
                 robot.center = robot_positions[frame_num]
+                scan_points = self.scans[frame_num]
+                xs = [scan_points[i][0] for i in range(len(scan_points))]
+                ys = [scan_points[i][1] for i in range(len(scan_points))]
+                global scatter
+                scatter.remove()
+                scatter = ax.scatter(xs, ys, c='b', s=5)
                 for i, human in enumerate(humans):
                     human.center = human_positions[frame_num][i]
                     human_numbers[i].set_position((human.center[0] - x_offset, human.center[1] - y_offset))
