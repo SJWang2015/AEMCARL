@@ -16,6 +16,9 @@ from numba import jit, cuda
 import math
 import cv2
 from math import atan2, pi
+from dr_spaam.detector import Detector
+
+dr_model_file = 'trained_models/ckpt_jrdb_ann_ft_dr_spaam_e20.pth'
 
 table_size = 10000
 table_offset = 5000
@@ -255,9 +258,12 @@ class CrowdSim(gym.Env):
         self.lidar_fov = 360
         self.scan_points = 360
         self.lidar_resolution = np.deg2rad(self.lidar_fov/self.scan_points)
+        self.detector = Detector(dr_model_file, model='DR-SPAAM',gpu=True,stride=1,panoramic_scan=True)
+        self.detector.set_laser_fov(self.lidar_fov)
         # for visualization
         self.states = None
         self.scans = None
+        self.detections = None
         self.action_values = None
         self.attention_weights = None
 
@@ -487,7 +493,7 @@ class CrowdSim(gym.Env):
         del sim
         return self.human_times
 
-    def scan_lidar(self):
+    def scan_lidar(self, noise = 0.3):
         # get scan as a dictionary {angle_index : distance}
         res = self.scan_points
         full_scan = {}
@@ -501,13 +507,37 @@ class CrowdSim(gym.Env):
         out_scan = np.zeros(res) + np.inf
         for k in full_scan.keys():
             out_scan[k] = full_scan[k]
+
+        out_scan = out_scan + noise*np.random.random(len(out_scan)) - 0.2
+        dim = 6
+        x = self.robot.px
+        y = self.robot.py
+        theta1 = np.arctan((dim-y)/(dim-x))
+        theta2 = np.pi - np.arctan((dim-y)/(dim+x))
+        theta3 = 1.5*np.pi - np.arctan((dim+x)/(dim+y))
+        theta4 = 1.5*np.pi + np.arctan((dim-x)/(dim+y))
+
+        for i in range(res):
+            if out_scan[i] == np.inf:
+                ang = np.deg2rad(360*i/res)
+                if  0 <= ang < theta1 or theta4 <= ang < 2*np.pi:
+                    out_scan[i] = (dim-x)/np.cos(ang)
+                elif theta1 <= ang < theta2:
+                    out_scan[i] = (dim-y)/np.sin(ang)
+                elif theta2 <= ang < theta3:
+                    out_scan[i] = -(dim+x)/np.cos(ang)
+                else:
+                    out_scan[i] = -(dim+y)/np.sin(ang)
+                
+            
+        # print(out_scan)
         return out_scan
     
     def scan_to_points(self, scan):
         coords = []
         for i in range(len(scan)):
-            if scan[i] != np.inf:
-                coords.append([self.robot.px + scan[i]*np.cos(np.deg2rad(i)), self.robot.py + scan[i]*np.sin(np.deg2rad(i))])
+            ang = 360*i/self.scan_points
+            coords.append([self.robot.px + scan[i]*np.cos(np.deg2rad(ang)), self.robot.py + scan[i]*np.sin(np.deg2rad(ang))])
 
         return coords
 
@@ -568,6 +598,7 @@ class CrowdSim(gym.Env):
 
         self.states = list()
         self.scans = list()
+        self.detections = list()
         if hasattr(self.robot.policy, 'action_values'):
             self.action_values = list()
         if hasattr(self.robot.policy, 'get_attention_weights'):
@@ -688,7 +719,19 @@ class CrowdSim(gym.Env):
             if hasattr(self.robot.policy, 'get_attention_weights'):
                 self.attention_weights.append(self.robot.policy.get_attention_weights())
 
-            self.scans.append(self.scan_to_points(self.scan_lidar()))
+            scan = self.scan_lidar()
+            self.scans.append(self.scan_to_points(scan))
+            dets_xy, dets_cls, instance_mask = self.detector(scan) 
+            cls_mask = dets_cls > 0.1
+            dets_xy = dets_xy[cls_mask]
+            
+            dets_xy_glob = []
+            for i in range(len(dets_xy)):
+                x = dets_xy[i][0]
+                y = dets_xy[i][1]
+                dets_xy_glob.append([x + self.robot.px, y + self.robot.py])
+
+            self.detections.append(dets_xy_glob)
 
             # update all agents
             self.robot.step(action)
@@ -880,6 +923,13 @@ class CrowdSim(gym.Env):
             ys = [scan_points[i][1] for i in range(len(scan_points))]
             global scatter 
             scatter = ax.scatter(xs, ys, c='b', s=5)
+
+            detection_points = self.detections[0]
+            xs = [detection_points[i][0] for i in range(len(detection_points))]
+            ys = [detection_points[i][1] for i in range(len(detection_points))]
+            global scatter2
+            scatter2 = ax.scatter(xs, ys, c='g', s=30)
+
             global_step = 0
             def update(frame_num):
                 nonlocal global_step
@@ -892,6 +942,12 @@ class CrowdSim(gym.Env):
                 global scatter
                 scatter.remove()
                 scatter = ax.scatter(xs, ys, c='b', s=5)
+                detection_points = self.detections[frame_num]
+                xs = [detection_points[i][0] for i in range(len(detection_points))]
+                ys = [detection_points[i][1] for i in range(len(detection_points))]
+                global scatter2 
+                scatter2.remove()
+                scatter2 = ax.scatter(xs, ys, c='g', s=30)
                 for i, human in enumerate(humans):
                     human.center = human_positions[frame_num][i]
                     human_numbers[i].set_position((human.center[0] - x_offset, human.center[1] - y_offset))
