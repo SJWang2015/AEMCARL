@@ -11,7 +11,7 @@ in challenging navigation scenarios. The novelty of this work is threefold: (1) 
 developing an adaptive reward function for the reinforcement learning (RL) framework to jointly train the environment model, perception function and motion planning policy. The proposed method is tested with the Gym-Gazebo simulator and a group of robots (Husky and Turtlebot) under various crowded scenes. Both simulation and experimental results have demonstrated the superior performance of the proposed method over baseline methods.
 
 ## Citation
-If you use rllab for academic research, you are highly encouraged to cite the following paper:
+If you use this code for academic research, you are highly encouraged to cite the following paper:
 
 ```latex
 
